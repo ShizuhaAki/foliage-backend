@@ -1,0 +1,5 @@
+build/**
+_deps/**
+cmake-build-debug/**
+third-party/**
+venv/**

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaflet Polyline from Coordinates</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 400px;
+            width: 100%;
+        }
+        .input-form {
+            margin: 20px;
+        }
+        .input-form input {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+<h1>Enter Coordinates to Draw Polyline or Query Backend</h1>
+<div class="input-form">
+    <h3>Start Coordinates</h3>
+    <input type="number" id="startLat" placeholder="Latitude" step="any">
+    <input type="number" id="startLng" placeholder="Longitude" step="any">
+
+    <h3>Goal Coordinates</h3>
+    <input type="number" id="goalLat" placeholder="Latitude" step="any">
+    <input type="number" id="goalLng" placeholder="Longitude" step="any">
+
+    <h3>Preference</h3>
+    <input type="text" id="preference" placeholder="e.g. not used now">
+
+    <button onclick="queryBackend()">Query Backend</button>
+    <button onclick="clearPolyline()">Clear Polyline</button>
+</div>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+    // Initialize map with a default center
+    var map = L.map('map').setView([31.298403, 121.499950], 13); // Default center, can be adjusted
+
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(map);
+
+    var polyline = L.polyline([]).addTo(map); // Initialize empty polyline
+    var latlngs = []; // Array to store coordinates
+
+    function clearPolyline() {
+        // Reset polyline and latlngs array
+        polyline.setLatLngs([]);
+        latlngs = [];
+    }
+
+    // Query the backend and add the polyline from the response
+    function queryBackend() {
+        // Get the user input for start and goal coordinates and preference
+        var startLat = parseFloat(document.getElementById('startLat').value);
+        var startLng = parseFloat(document.getElementById('startLng').value);
+        var goalLat = parseFloat(document.getElementById('goalLat').value);
+        var goalLng = parseFloat(document.getElementById('goalLng').value);
+        var preference = document.getElementById('preference').value;
+
+        // Validate inputs
+        if (isNaN(startLat) || isNaN(startLng) || isNaN(goalLat) || isNaN(goalLng)) {
+            alert("Please enter valid latitude and longitude for both start and goal.");
+            return;
+        }
+
+        // Construct the query data
+        var queryData = {
+            start: {
+                lat: startLat,
+                lon: startLng
+            },
+            goal: {
+                lat: goalLat,
+                lon: goalLng
+            },
+            preference: {
+                highway: preference
+            }
+        };
+
+        // Send the query to the backend
+        fetch('http://localhost:9961/query', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(queryData)
+        })
+            .then(response => response.json())
+            .then(data => {
+                // Convert the response data to an array of coordinates
+                var path = data.map(point => [point.lat, point.lon]);
+
+                // Update the polyline on the map with the new path
+                polyline.setLatLngs(path);
+
+                // Optionally, center the map to fit the polyline
+                map.fitBounds(polyline.getBounds());
+            })
+            .catch(error => {
+                console.error('Error querying backend:', error);
+            });
+    }
+</script>
+</body>
+</html>
