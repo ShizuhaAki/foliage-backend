@@ -208,6 +208,11 @@ namespace Foliage::Pathfinder {
     double LayeredAStarPathfinder::get_way_weight(ObjectType::NeighborInfo way) {
         if (!way.tags.contains("highway")) throw std::invalid_argument("Way should be a highway");
         else {
+            if (way.tags.contains("oneway") && way.tags.at("oneway") == "yes") {
+                if (way.is_positive_direction == false) {
+                    return -1; // negative weight will not be counted anyway;
+                }
+            }
             // Step 1. Compute the speed of the road
             double speed;
             if (way.tags.contains("maxspeed")) {
@@ -232,11 +237,19 @@ namespace Foliage::Pathfinder {
 
             // Step 4. Adjust cost based on road type
             const std::unordered_map<std::string, double> highway_bonus = {
-                {"motorway", 0.7}, // Encourage motorways most
-                {"trunk", 0.85},
-                {"primary", 0.9},
-                {"secondary", 1.0},
-                {"tertiary", 1.1}
+                {"motorway", 0.5}, // Encourage motorways most
+                {"motorway_link", 0.5},
+                {"trunk", 0.8},
+                {"trunk_link", 0.8},
+                {"primary", 1.0},
+                {"primary_link", 1.0},
+                {"secondary", 3.0},
+                {"secondary_link", 3.0},
+                {"tertiary", 10.0},
+                {"tertiary_link", 10.0},
+                {"unclassified", 1000.0},
+                {"residential", 10000.0}
+           //     {"service", 10} // don't use service roads unless absolutely necessary
             };
 
             if (highway_bonus.contains(way.tags["highway"])) {
@@ -266,11 +279,11 @@ namespace Foliage::Pathfinder {
                 std::string target_highway = way_to_target.tags.at("highway");
                 // Discourage transitions off highways
                 const std::unordered_map<std::string, int> highway_priority = {
-                    {"motorway", 1},
-                    {"trunk", 2},
-                    {"primary", 3},
-                    {"secondary", 4},
-                    {"tertiary", 5},
+                    {"motorway", 1},{"motorway_link", 1},
+                    {"trunk", 2}, {"trunk_link", 2},
+                    {"primary", 3},{"primary_link", 3},
+                    {"secondary", 4},{"secondary_link", 4},
+                    {"tertiary", 5},{"tertiary_link", 5},
                     {"unclassified", 6},
                     {"residential", 7}
                 };
@@ -283,9 +296,9 @@ namespace Foliage::Pathfinder {
                                           : 100;
 
                 if (current_priority < target_priority) {
-                    way_weight *= 1.5; // Penalty for downgrading
+                    way_weight *= 3; // Penalty for downgrading
                 } else {
-                    way_weight *= 0.8; // Bonus for upgrading
+                    way_weight *= 0.5; // Bonus for upgrading
                 }
 
                 if (way_weight >= 0) {

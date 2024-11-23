@@ -6,6 +6,12 @@
 
 namespace Foliage::DataProvider::OSM {
 
+    void Document::reset() {
+        nodes_by_id.clear();
+        ways_by_id.clear();
+        qtree = Util::QuadTree(BoundingBox({-1,-1},{-1,-1}),10);
+    }
+
     void Document::load() {
         auto result = doc.LoadFile(xmlFile.c_str());
         if (result != tinyxml2::XML_SUCCESS) {

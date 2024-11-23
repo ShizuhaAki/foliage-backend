@@ -32,7 +32,12 @@ namespace Foliage::ObjectType {
                 // Check if current node is this node or if next node is a neighbor
                 if (current_node.get() == this || next_node.get() == this) {
                     auto neighbor = (current_node.get() == this) ? next_node : current_node;
-
+                    if (next_node.get() == this) {
+                        // this is negative direction
+                        neighbors[neighbor].is_positive_direction = false;
+                    } else {
+                        neighbors[neighbor].is_positive_direction = true;
+                    }
                     // Calculate the distance between the nodes
                     double distance = compute_distance(this->position, neighbor->position);
 

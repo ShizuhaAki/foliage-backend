@@ -45,7 +45,7 @@ namespace Foliage::DataProvider::OSM {
             this->xmlFile = std::move(xmlFile);
         }
         void load() override;
-
+        void reset() override;
         void parse() override;
     };
 }

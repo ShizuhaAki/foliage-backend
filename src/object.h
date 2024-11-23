@@ -19,6 +19,7 @@ namespace Foliage::ObjectType {
     struct Node;
     struct NeighborInfo {
         double distance;  // Distance to the neighboring node
+        bool is_positive_direction;
         std::unordered_map<std::string, std::string> tags;  // Tags of the way that led to this neighbor
     };
     struct Object {
